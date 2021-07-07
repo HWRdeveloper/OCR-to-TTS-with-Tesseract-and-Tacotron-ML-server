@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private Uri mImageCaptureUri;
     Button button;
     ImageView imageView;
-
     TextView textView;
     String dataPath = "";
     @Override
