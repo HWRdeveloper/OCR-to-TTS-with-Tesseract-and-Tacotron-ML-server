@@ -65,12 +65,36 @@ public class ResultActivity extends AppCompatActivity {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 8;
             interpretText.setText("텍스트 인식중...");
-            new ResultActivity.AsyncTess().execute(doGreyscale(bitmap));
+            new ResultActivity.AsyncTess().execute(RemoveNoise(GetBinaryBitmap(doGreyscale(bitmap))));
             //camera.startPreview();
         }
 
         // 임시 파일 삭제
 
+    }
+
+    public Bitmap RemoveNoise(Bitmap bmap) {
+        for (int x = 0; x < bmap.getWidth(); x++) {
+            for (int y = 0; y < bmap.getHeight(); y++) {
+                int pixel = bmap.getPixel(x, y);
+                int R = Color.red(pixel);
+                int G = Color.green(pixel);
+                int B = Color.blue(pixel);
+                if (R < 162 && G < 162 && B < 162)
+                    bmap.setPixel(x, y, Color.BLACK);
+            }
+        }
+        for (int  x = 0; x < bmap.getWidth(); x++) {
+            for (int y = 0; y < bmap.getHeight(); y++) {
+                int pixel = bmap.getPixel(x, y);
+                int R = Color.red(pixel);
+                int G = Color.green(pixel);
+                int B = Color.blue(pixel);
+                if (R > 162 && G > 162 && B > 162)
+                    bmap.setPixel(x, y, Color.WHITE);
+            }
+        }
+        return bmap;
     }
 
 
@@ -178,6 +202,42 @@ public class ResultActivity extends AppCompatActivity {
             interpretText.setText(result);
             Toast.makeText(ResultActivity.this, ""+result, Toast.LENGTH_LONG).show();
 
+        }
+    }
+
+    private Bitmap GetBinaryBitmap(Bitmap bitmap_src) {
+        Bitmap bitmap_new = bitmap_src.copy(bitmap_src.getConfig(), true);
+
+        for (int x = 0; x < bitmap_new.getWidth(); x++) {
+            for (int y = 0; y < bitmap_new.getHeight(); y++) {
+                int color = bitmap_new.getPixel(x, y);
+                color = GetNewColor(color);
+                bitmap_new.setPixel(x, y, color);
+            }
+        }
+
+        return bitmap_new;
+    }
+
+
+    private double GetColorDistance(int c1, int c2) {
+        int db = Color.blue(c1) - Color.blue(c2);
+        int dg = Color.green(c1) - Color.green(c2);
+        int dr = Color.red(c1) - Color.red(c2);
+
+        double d = Math.sqrt(Math.pow(db, 2) + Math.pow(dg, 2) + Math.pow(dr, 2));
+        return d;
+    }
+
+    private int GetNewColor(int c) {
+        double dwhite = GetColorDistance(c, Color.WHITE);
+        double dblack = GetColorDistance(c, Color.BLACK);
+
+        if (dwhite <= dblack) {
+            return Color.WHITE;
+
+        } else {
+            return Color.BLACK;
         }
     }
 
