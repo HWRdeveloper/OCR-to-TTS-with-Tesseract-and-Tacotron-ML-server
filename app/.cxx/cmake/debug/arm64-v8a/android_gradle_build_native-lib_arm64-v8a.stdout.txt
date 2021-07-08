@@ -1,2 +1,2 @@
-ninja: Entering directory `C:\Users\Hyeonwoo\Downloads\android-tesseract-demo-master\android-tesseract-demo-master\app\.cxx\cmake\debug\arm64-v8a'
+ninja: Entering directory `C:\Users\neode\Desktop\android_tesseract\app\.cxx\cmake\debug\arm64-v8a'
 ninja: no work to do.
