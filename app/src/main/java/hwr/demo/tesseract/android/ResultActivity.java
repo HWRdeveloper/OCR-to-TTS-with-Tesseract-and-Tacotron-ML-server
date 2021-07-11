@@ -22,6 +22,13 @@ import android.widget.Toast;
 import com.googlecode.tesseract.android.TessBaseAPI;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -34,6 +41,11 @@ public class ResultActivity extends AppCompatActivity {
     TextView interpretText;
     String dataPath = "";
     TessBaseAPI tessBaseAPI;
+    private double colorGain = 1.5;       // contrast
+    private double colorBias = 0;         // bright
+    private int colorThresh = 110;        // threshold
+    private boolean colorMode=false;
+    private boolean filterMode=true;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,12 +77,73 @@ public class ResultActivity extends AppCompatActivity {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 8;
             interpretText.setText("텍스트 인식중...");
+
+            Mat mat = new Mat();
+            Bitmap bmp32 = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            Utils.bitmapToMat(bmp32, mat);
+            enhanceDocument(mat);
             new ResultActivity.AsyncTess().execute(RemoveNoise(GetBinaryBitmap(doGreyscale(bitmap))));
             //camera.startPreview();
         }
 
         // 임시 파일 삭제
 
+    }
+
+
+    private void enhanceDocument( Mat src ) {
+        if (colorMode && filterMode) {
+            src.convertTo(src,-1, colorGain , colorBias);
+            Mat mask = new Mat(src.size(), CvType.CV_8UC1);
+            Imgproc.cvtColor(src,mask,Imgproc.COLOR_RGBA2GRAY);
+
+            Mat copy = new Mat(src.size(), CvType.CV_8UC3);
+            src.copyTo(copy);
+
+            Imgproc.adaptiveThreshold(mask,mask,255,Imgproc.ADAPTIVE_THRESH_MEAN_C,Imgproc.THRESH_BINARY_INV,15,15);
+
+            src.setTo(new Scalar(255,255,255));
+            copy.copyTo(src,mask);
+
+            copy.release();
+            mask.release();
+
+            // special color threshold algorithm
+            colorThresh(src,colorThresh);
+        } else if (!colorMode) {
+            Imgproc.cvtColor(src,src,Imgproc.COLOR_RGBA2GRAY);
+            if (filterMode) {
+                Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
+            }
+        }
+    }
+
+    private void colorThresh(Mat src, int threshold) {
+
+        Size srcSize = src.size();
+        int size = (int) (srcSize.height * srcSize.width)*3;
+        byte[] d = new byte[size];
+        src.get(0,0,d);
+
+        for (int i=0; i < size; i+=3) {
+            // the "& 0xff" operations are needed to convert the signed byte to double
+            // avoid unneeded work
+            if ( (double) (d[i] & 0xff) == 255 ) {
+                continue;
+            }
+            double max = Math.max(Math.max((double) (d[i] & 0xff), (double) (d[i + 1] & 0xff)),
+                    (double) (d[i + 2] & 0xff));
+            double mean = ((double) (d[i] & 0xff) + (double) (d[i + 1] & 0xff)
+                    + (double) (d[i + 2] & 0xff)) / 3;
+            if (max > threshold && mean < max * 0.8) {
+                d[i] = (byte) ((double) (d[i] & 0xff) * 255 / max);
+                d[i + 1] = (byte) ((double) (d[i + 1] & 0xff) * 255 / max);
+                d[i + 2] = (byte) ((double) (d[i + 2] & 0xff) * 255 / max);
+            } else {
+                d[i] = d[i + 1] = d[i + 2] = 0;
+            }
+        }
+        src.put(0,0,d);
     }
 
     public Bitmap RemoveNoise(Bitmap bmap) {
