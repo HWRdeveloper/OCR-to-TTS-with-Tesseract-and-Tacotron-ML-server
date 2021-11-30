@@ -49,16 +49,21 @@ public class ResultActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_result);
+        setContentView(R.layout.activity_result); // xml 레이아웃 연결
+
         interpretText = findViewById(R.id.result_text);
         cropImageView = (ImageView) findViewById(R.id.cropImageView);
         dataPath = getFilesDir()+ "/tesseract/";
         checkFile(new File(dataPath + "tessdata/"), "kor");
         checkFile(new File(dataPath + "tessdata/"), "eng");
-        // 문자 인식을 수행할 tess 객체 생성
+        // 문자 인식을 수행할 tess 객체 생성성
+
+        //언어 설정
         String lang = "kor+eng";
+        //api 생
         tessBaseAPI = new TessBaseAPI();
         tessBaseAPI.init(dataPath, lang);
+        //uri로 이미지 가져오기
         Uri uri = getIntent().getParcelableExtra("imageUri");
         Log.d("uriString", uri.toString());
         cropImageView.setImageURI(uri);
@@ -69,6 +74,7 @@ public class ResultActivity extends AppCompatActivity {
         }
     }
 
+    // 해석
     private void interpretText(Uri uri) throws IOException {
 
         {
@@ -90,7 +96,7 @@ public class ResultActivity extends AppCompatActivity {
 
     }
 
-
+    // 문서 해상도 개선 관련 메서드
     private void enhanceDocument( Mat src ) {
         if (colorMode && filterMode) {
             src.convertTo(src,-1, colorGain , colorBias);
@@ -146,6 +152,7 @@ public class ResultActivity extends AppCompatActivity {
         src.put(0,0,d);
     }
 
+    //노이즈 제거 메서드
     public Bitmap RemoveNoise(Bitmap bmap) {
         for (int x = 0; x < bmap.getWidth(); x++) {
             for (int y = 0; y < bmap.getHeight(); y++) {
@@ -216,6 +223,7 @@ public class ResultActivity extends AppCompatActivity {
         }
     }
 
+    //그레이스케일링
     public static Bitmap doGreyscale(Bitmap src)
     {
         final double GS_RED = 0.299;

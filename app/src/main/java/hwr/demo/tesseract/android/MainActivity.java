@@ -52,19 +52,23 @@ public class MainActivity extends AppCompatActivity {
     TextView textView;
     String dataPath = "";
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        button = findViewById(R.id.button);
+        setContentView(R.layout.activity_main); //xml 레이아웃과 액티비티 연
+        button = findViewById(R.id.button);결 //버튼 참조 연결
+
+        // 버튼 클릭이벤트 리스너 연결
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // 버튼 클릭시 onPicClick() 메서드 실행
                 onPicClick();
             }
         });
     }
 
-
+    // 언어파일 확인
     boolean checkLanguageFile(String dir, String lang)
     {
         File file = new File(dir);
@@ -81,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
     }
     // 파일 존재 확인
 
-
+    //파일 생성
     private void createFiles(String dir)
     {
         AssetManager assetMgr = this.getAssets();
@@ -110,34 +114,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onPicClick() {
-
-
+        // 카메라 버튼 리스너
         DialogInterface.OnClickListener cameraListener = new DialogInterface.OnClickListener() {
-
             @Override
-
             public void onClick(DialogInterface dialog, int which) {
+                // 버튼 클릭시 doTakePhotoAction() 메서드 실행
                 doTakePhotoAction();
             }
-
         };
-
+        //앨범 버튼 리스너
         DialogInterface.OnClickListener albumListener = new DialogInterface.OnClickListener() {
-
             @Override
-
             public void onClick(DialogInterface dialog, int which) {
+                // 버튼 클릭시 doTakeAlbumAction() 메서드 실행
                 doTakeAlbumAction();
             }
-
         };
-
-
+        // 취소버튼 리스너
         DialogInterface.OnClickListener cancelListener = new DialogInterface.OnClickListener() {
-
             @Override
-
             public void onClick(DialogInterface dialog, int which) {
+                // 버튼 클릭시 dialog.dismiss() 실행
                 dialog.dismiss();
             }
 
@@ -166,13 +163,15 @@ public class MainActivity extends AppCompatActivity {
     public void doTakeAlbumAction() // 앨범에서 이미지 가져오기
 
     {
-        // 앨범 호출
+        // 앨범 호출 인텐트 생성
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
+        // 후 액티비티 실행
         startActivityForResult(intent, PICK_FROM_ALBUM);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //액티비티 결과
         super.onActivityResult(requestCode,resultCode,data);
         if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
             CropImage.ActivityResult result = CropImage.getActivityResult(data);
@@ -195,8 +194,7 @@ public class MainActivity extends AppCompatActivity {
         {
             case PICK_FROM_ALBUM:
             {
-                // 이후의 처리가 카메라와 같으므로 일단  break없이 진행합니다.
-                // 실제 코드에서는 좀더 합리적인 방법을 선택하시기 바랍니다.
+                // 이후의 처리가 카메라와 같으므로 일단  break없이 진행
                 mImageCaptureUri = data.getData();
                 Log.d("이미지 경로",mImageCaptureUri.getPath().toString());
             }
@@ -204,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
 
             case PICK_FROM_CAMERA:
             {
-                // 이미지를 가져온 이후의 리사이즈할 이미지 크기를 결정합니다.
+                // 이미지를 가져온 이후의 리사이즈할 이미지 크기를 결정
                 CropImage.activity(mImageCaptureUri)
                         .start(this);
                 break;
@@ -214,37 +212,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void storeCropImage(Bitmap bitmap, String filePath) {
 
-        // SmartWheel 폴더를 생성하여 이미지를 저장하는 방식이다.
-
+        // 폴더를 생성하여 이미지를 저장하는 방식이다.
+        // 저장 경로 불러오기
         String dirPath = Environment.getExternalStorageDirectory().getAbsolutePath() + CAPTURE_PATH;
-
         File directory_SmartWheel = new File(dirPath);
 
-
         if(!directory_SmartWheel.exists()) // SmartWheel 디렉터리에 폴더가 없다면 (새로 이미지를 저장할 경우에 속한다.)
-
-            directory_SmartWheel.mkdir();
+        //새로 생성
+        directory_SmartWheel.mkdir();
         File copyFile = new File(filePath);
 
         BufferedOutputStream out = null;
 
-
         try {
 
-
             copyFile.createNewFile();
-
             out = new BufferedOutputStream(new FileOutputStream(copyFile));
-
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-
-
             // sendBroadcast를 통해 Crop된 사진을 앨범에 보이도록 갱신한다.
-
             sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
-
                     Uri.fromFile(copyFile)));
-
             MediaScannerConnection.scanFile( getApplicationContext(),
 
                     new String[]{copyFile.getAbsolutePath()},
@@ -262,28 +249,15 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                     });
-
-
-
             out.flush();
-
             out.close();
-
         } catch (Exception e) {
-
+            // 예외 처리
             e.printStackTrace();
 
         }
-
         Log.d("file path", filePath);
         Uri imageUri = Uri.fromFile(copyFile);
-//        Glide.with(getApplicationContext()).load(imageUri)
-//                .centerCrop()
-//                //.placeholder(R.drawable.alimi_sample)
-//                //.error(R.drawable.alimi_sample)
-//                .into(ivImage);
-
-
     }
 }
 
